@@ -1,5 +1,3 @@
-# main.tf
-
 provider "aws" {
   region = var.aws_region
 }
@@ -9,7 +7,7 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
-# Creating vpc
+# Creating VPC
 resource "aws_vpc" "main_vpc" {
   cidr_block = var.vpc_cidr_block
   tags = {
@@ -17,7 +15,7 @@ resource "aws_vpc" "main_vpc" {
   }
 }
 
-# Creating IG
+# Creating Internet Gateway
 resource "aws_internet_gateway" "main_igw" {
   vpc_id = aws_vpc.main_vpc.id
   tags = {
@@ -25,11 +23,11 @@ resource "aws_internet_gateway" "main_igw" {
   }
 }
 
-# Creating Public Subnets 
+# Creating Public Subnets
 resource "aws_subnet" "public_subnets" {
   count                   = min(3, length(data.aws_availability_zones.available.names))
   vpc_id                  = aws_vpc.main_vpc.id
-  cidr_block              = cidrsubnet(var.vpc_cidr_block, 8, count.index + 1)  # This may need adjusting
+  cidr_block              = cidrsubnet(var.vpc_cidr_block, 8, count.index + 1) # Adjusted for unique public CIDRs
   availability_zone       = data.aws_availability_zones.available.names[count.index]
   map_public_ip_on_launch = true
 
@@ -38,11 +36,11 @@ resource "aws_subnet" "public_subnets" {
   }
 }
 
-# Creating Private Subnets 
+# Creating Private Subnets
 resource "aws_subnet" "private_subnets" {
   count             = min(3, length(data.aws_availability_zones.available.names))
   vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = cidrsubnet(var.vpc_cidr_block, 8, count.index + 4)  # Adjusted index for private subnets
+  cidr_block        = cidrsubnet(var.vpc_cidr_block, 8, count.index + 4) # Adjusted for unique private CIDRs
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
   tags = {
@@ -71,7 +69,7 @@ resource "aws_route_table_association" "public_subnet_associations" {
   route_table_id = aws_route_table.public_route_table.id
 }
 
-# Creating Private RT
+# Creating Private Route Table
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.main_vpc.id
 
