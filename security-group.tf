@@ -25,7 +25,7 @@ resource "aws_security_group" "web_sg" {
   }
 
   ingress {
-    from_port   = 8080  # Your app port
+    from_port   = 8080 # Your app port
     to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
