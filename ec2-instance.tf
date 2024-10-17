@@ -12,9 +12,7 @@ data "aws_ami" "latest_ami" {
   owners = ["self", "886436923776"]
 }
 
-resource "aws_instance" "web_app_instances" {
-  ami                         = data.aws_ami.latest_ami.id # Use the dynamically fetched AMI ID
-  instance_type               = "t2.micro"
+
 
 resource "aws_instance" "web_app_instances" {
   ami           = "ami-0035747b85a09457c" # Replace with your AMI ID
