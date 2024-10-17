@@ -9,7 +9,7 @@ output "public_subnet_ids" {
 }
 
 output "first_public_subnet" {
-  value = aws_subnet.public_subnets[0].id
+  value       = aws_subnet.public_subnets[0].id
   description = "ID of the first public subnet"
 }
 
