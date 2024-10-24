@@ -35,3 +35,7 @@ output "security_group_name" {
   value       = aws_security_group.web_sg.name
 }
 
+output "endpoint" {
+  description = "The name of the security group"
+  value       = aws_db_instance.db_instance.endpoint
+}

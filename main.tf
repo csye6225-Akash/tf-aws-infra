@@ -84,3 +84,48 @@ resource "aws_route_table_association" "private_subnet_associations" {
   subnet_id      = aws_subnet.private_subnets[count.index].id
   route_table_id = aws_route_table.private_route_table.id
 }
+
+
+resource "aws_db_parameter_group" "rds_parameter_group" {
+  name        = "custom-rds-parameter-group"
+  family      = "mysql8.0"
+  description = "Custom parameter group for RDS"
+
+  parameter {
+    name  = "max_connections"
+    value = "200"
+  }
+
+
+}
+
+resource "aws_db_subnet_group" "rds_subnet_group" {
+  name       = "rds-subnet-group"
+  subnet_ids = [aws_subnet.private_subnets[0].id, aws_subnet.private_subnets[1].id] # Add your private subnets here
+
+  tags = {
+    Name = "RDS Subnet Group"
+  }
+}
+
+variable "db_password" {
+  description = "The password for the RDS database instance"
+  type        = string
+  sensitive   = true
+}
+
+resource "aws_db_instance" "db_instance" {
+  allocated_storage      = 20
+  engine                 = "mysql"
+  instance_class         = "db.t3.micro"
+  engine_version         = "8.0.33"
+  db_name                = var.db_name
+  username               = var.db_username
+  password               = var.db_password # Store in environment variable or use Terraform secrets
+  db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+  multi_az               = false
+  publicly_accessible    = false
+  parameter_group_name   = aws_db_parameter_group.rds_parameter_group.name
+  skip_final_snapshot    = true
+}
