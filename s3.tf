@@ -136,6 +136,10 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
   policy_arn = aws_iam_policy.cloudwatch_s3_policy.arn
 }
 
+resource "aws_iam_role_policy_attachment" "attach_extra_policy" {
+  role       = aws_iam_role.instance_role.name # The name of your existing IAM role
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
 
 resource "aws_route53_record" "app" {
   zone_id = var.zone_id # Use your Zone ID variable directly
