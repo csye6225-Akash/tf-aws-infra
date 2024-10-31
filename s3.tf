@@ -119,7 +119,7 @@ resource "aws_iam_policy" "cloudwatch_s3_policy" {
           "s3:DeleteObject"
         ],
         Effect   = "Allow",
-        Resource = "arn:aws:s3:::<bucket-name>/*"
+        Resource = "arn:aws:s3:::${aws_s3_bucket.private_bucket.bucket}/*"
       }
     ]
   })
