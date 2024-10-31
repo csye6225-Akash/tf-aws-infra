@@ -17,6 +17,7 @@ data "aws_ami" "latest_ami" {
 resource "aws_instance" "web_app_instances" {
   ami                         = data.aws_ami.latest_ami.id # Replace with your AMI ID
   instance_type               = "t2.micro"
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.name
   vpc_security_group_ids      = [aws_security_group.web_sg.id]
   subnet_id                   = aws_subnet.public_subnets[0].id
   associate_public_ip_address = "true"
@@ -51,6 +52,7 @@ resource "aws_instance" "web_app_instances" {
               echo "DEVUSERNAME=${var.db_username}" >> /opt/webapp/.env
               echo "DEVPASSWORD=${var.db_password}" >> /opt/webapp/.env
               echo "DEVDB=${var.db_name}" >> /opt/webapp/.env
+              echo "DEVDB=${aws_s3_bucket.private_bucket.bucket}" >> /opt/webapp/.env
               
               # Create systemd service file for the webapp
               echo "[Unit]" > /etc/systemd/system/webapp.service
