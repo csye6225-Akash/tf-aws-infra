@@ -6,7 +6,7 @@
 # resource "aws_s3_bucket_acl" "private_bucket_acl" {
 #   bucket = "akash-bucket-${formatdate("YYYYMMDD", timestamp())}-${random_id.bucket_id.hex}"
 #   acl    = "private"
-  
+
 # }
 
 # # Generate a random ID for the bucket name
@@ -37,8 +37,8 @@ resource "aws_s3_bucket" "private_bucket" {
   bucket = "akash-bucket-${formatdate("YYYYMMDD", timestamp())}-${random_id.bucket_id.hex}"
 
   # Ensure the bucket is private
-  acl    = "private"  # This is optional; you can remove it if you're using bucket policies.
-   force_destroy = true
+  acl           = "private" # This is optional; you can remove it if you're using bucket policies.
+  force_destroy = true
 }
 
 # If you need to set a bucket policy, you can do it like this
@@ -49,10 +49,10 @@ resource "aws_s3_bucket_policy" "private_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect = "Allow"
+        Effect    = "Allow"
         Principal = "*"
-        Action = "s3:GetObject"
-        Resource = "${aws_s3_bucket.private_bucket.arn}/*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.private_bucket.arn}/*"
         Condition = {
           StringEquals = {
             "aws:sourceArn" = aws_s3_bucket.private_bucket.arn
@@ -138,7 +138,7 @@ resource "aws_iam_role_policy_attachment" "attach_policy" {
 
 
 resource "aws_route53_record" "app" {
-  zone_id = var.zone_id  # Use your Zone ID variable directly
+  zone_id = var.zone_id # Use your Zone ID variable directly
   name    = "${var.subdomain}.${var.domain_name}"
   type    = "A"
   ttl     = 300

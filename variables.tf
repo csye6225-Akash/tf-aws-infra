@@ -38,10 +38,10 @@ variable "owner" {
 
 
 variable "domain_name" { default = "akashchhabria.me" }
-variable "subdomain" { default = "dev" }  # Can also be "demo"
-variable "port" { default = 8080 }  # Replace with your app’s listening port
+variable "subdomain" { default = "dev" } # Can also be "demo"
+variable "port" { default = 8080 }       # Replace with your app’s listening port
 
-variable "zone_id" { type = string }  # Replace with your app’s listening port
+variable "zone_id" { type = string } # Replace with your app’s listening port
 
 
 

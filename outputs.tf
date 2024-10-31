@@ -41,6 +41,6 @@ output "endpoint" {
 }
 
 output "s3_bucket_name" {
-  value = aws_s3_bucket.private_bucket.bucket
+  value       = aws_s3_bucket.private_bucket.bucket
   description = "The name of the private S3 bucket."
 }
