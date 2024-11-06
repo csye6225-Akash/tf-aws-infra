@@ -126,10 +126,7 @@ resource "aws_iam_policy" "cloudwatch_s3_policy" {
 }
 
 
-resource "aws_iam_role" "instance_role" {
-  name               = "InstanceRole"
-  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
-}
+
 
 resource "aws_iam_role_policy_attachment" "attach_policy" {
   role       = aws_iam_role.instance_role.name
@@ -141,21 +138,34 @@ resource "aws_iam_role_policy_attachment" "attach_extra_policy" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-resource "aws_route53_record" "app" {
-  zone_id = var.zone_id # Use your Zone ID variable directly
+# resource "aws_route53_record" "app" {
+#   zone_id = var.zone_id # Use your Zone ID variable directly
+#   name    = "${var.subdomain}.${var.domain_name}"
+#   type    = "A"
+#   ttl     = 300
+#   records = [aws_instance.web_app_instances.public_ip]
+
+#   depends_on = [aws_instance.web_app_instances]
+# }
+
+resource "aws_route53_record" "csye6225_dns_record" {
+  zone_id = var.zone_id
   name    = "${var.subdomain}.${var.domain_name}"
   type    = "A"
-  ttl     = 300
-  records = [aws_instance.web_app_instances.public_ip]
 
-  depends_on = [aws_instance.web_app_instances]
+  alias {
+    name                   = aws_lb.csye6225_alb.dns_name
+    zone_id                = aws_lb.csye6225_alb.zone_id
+    evaluate_target_health = true
+  }
 }
 
 
-# resource "aws_iam_role" "instance_role" {
-#   name               = "InstanceRole"
-#   assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
-# }
+
+resource "aws_iam_role" "instance_role" {
+  name               = "InstanceRole"
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role_policy.json
+}
 
 resource "aws_iam_instance_profile" "instance_profile" {
   role = aws_iam_role.instance_role.name
