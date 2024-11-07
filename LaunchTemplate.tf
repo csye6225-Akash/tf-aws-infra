@@ -1,6 +1,6 @@
 resource "aws_launch_template" "csye6225_lt" {
   name          = "csye6225_lt"
-  image_id      = "ami-06f2bcd380e4bba3f"
+  image_id      = data.aws_ami.latest_ami.id
   instance_type = "t2.micro"
   //key_name      = "YOUR_AWS_KEYNAME"
 
@@ -13,7 +13,7 @@ resource "aws_launch_template" "csye6225_lt" {
     security_groups             = [aws_security_group.web_sg.id]
   }
 
-  user_data =  base64encode(<<-EOF
+  user_data = base64encode(<<-EOF
               #!/bin/bash
              
               
@@ -47,16 +47,16 @@ EOF
 
 
 resource "aws_autoscaling_group" "csye6225_asg" {
-  desired_capacity     = 1
-  max_size             = 5
-  min_size             = 1
+  desired_capacity = var.desired_capacity
+  max_size         = var.max_size
+  min_size         = var.min_size
   launch_template {
     id      = aws_launch_template.csye6225_lt.id
     version = "$Latest"
   }
 
   vpc_zone_identifier = [aws_subnet.public_subnets[0].id, aws_subnet.public_subnets[1].id] # Add your subnets
-  target_group_arns = [aws_lb_target_group.csye6225_tg.arn]
+  target_group_arns   = [aws_lb_target_group.csye6225_tg.arn]
 
   tag {
     key                 = "Name"
@@ -64,25 +64,25 @@ resource "aws_autoscaling_group" "csye6225_asg" {
     propagate_at_launch = true
   }
   health_check_grace_period = 300
-  health_check_type = "EC2"
+  health_check_type         = "EC2"
 }
 
 # Auto-scaling policies
 resource "aws_autoscaling_policy" "scale_up_policy" {
-  name                   = "scale_up_policy"
-  scaling_adjustment     = 1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 60
-  autoscaling_group_name = aws_autoscaling_group.csye6225_asg.name
+  name                    = "scale_up_policy"
+  scaling_adjustment      = 1
+  adjustment_type         = "ChangeInCapacity"
+  cooldown                = 60
+  autoscaling_group_name  = aws_autoscaling_group.csye6225_asg.name
   metric_aggregation_type = "Average"
 }
 
 resource "aws_autoscaling_policy" "scale_down_policy" {
-  name                   = "scale_down_policy"
-  scaling_adjustment     = -1
-  adjustment_type        = "ChangeInCapacity"
-  cooldown               = 60
-  autoscaling_group_name = aws_autoscaling_group.csye6225_asg.name
+  name                    = "scale_down_policy"
+  scaling_adjustment      = -1
+  adjustment_type         = "ChangeInCapacity"
+  cooldown                = 60
+  autoscaling_group_name  = aws_autoscaling_group.csye6225_asg.name
   metric_aggregation_type = "Average"
 }
 
@@ -98,10 +98,10 @@ resource "aws_lb" "csye6225_alb" {
 }
 
 resource "aws_lb_target_group" "csye6225_tg" {
-  name     = "csye6225tg"
-  port     = 8080
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main_vpc.id
+  name        = "csye6225tg"
+  port        = 8080
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main_vpc.id
   target_type = "instance"
 
   health_check {
@@ -136,8 +136,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_up_alarm" {
   namespace           = "AWS/EC2"
   period              = 60
   statistic           = "Average"
-  threshold           = 5  # Adjust this threshold as needed
-  alarm_description   = "Triggers scale-up policy when CPU utilization exceeds 70%."
+  threshold           = var.scale_up_threshold # Adjust this threshold as needed
+  alarm_description   = "Triggers scale-up policy when CPU utilization exceeds given threshold."
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.csye6225_asg.name
@@ -154,8 +154,8 @@ resource "aws_cloudwatch_metric_alarm" "scale_down_alarm" {
   namespace           = "AWS/EC2"
   period              = 60
   statistic           = "Average"
-  threshold           = 2  # Adjust this threshold as needed
-  alarm_description   = "Triggers scale-down policy when CPU utilization falls below 30%."
+  threshold           = var.scale_down_threshold # Adjust this threshold as needed
+  alarm_description   = "Triggers scale-down policy when CPU utilization falls below given threshold"
 
   dimensions = {
     AutoScalingGroupName = aws_autoscaling_group.csye6225_asg.name

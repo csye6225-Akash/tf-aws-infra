@@ -37,12 +37,38 @@ variable "owner" {
 }
 
 
-variable "domain_name" { default = "akashchhabria.me" }
-variable "subdomain" { default = "dev" } # Can also be "demo"
-variable "port" { default = 8080 }       # Replace with your app’s listening port
+variable "domain_name" {
+  type = string
+}
+variable "subdomain" {
+  type = string
+}
+variable "port" {
+  default = 8080
+} # Replace with your app’s listening port
 
-variable "zone_id" { type = string } # Replace with your app’s listening port
+variable "zone_id" {
+  type = string
+} # Replace with your app’s listening port
 
+variable "min_size" {
+  type = number
+}
 
+variable "max_size" {
+  type = number
+}
 
+variable "desired_capacity" {
+  type = number
+}
+
+variable "scale_up_threshold" {
+  type = number
+}
+
+variable "scale_down_threshold" {
+  type = number
+
+}
 
