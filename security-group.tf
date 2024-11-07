@@ -7,7 +7,9 @@ resource "aws_security_group" "web_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
+
     //cidr_blocks = [var.cidr_block]
+
 
   }
 
@@ -26,6 +28,7 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = [var.cidr_block]
   }
 
+
   # ingress {
   #   from_port       = 443
   #   to_port         = 443
@@ -33,6 +36,7 @@ resource "aws_security_group" "web_sg" {
   #   cidr_blocks     = [var.cidr_block]
   #   security_groups = [aws_security_group.load_balancer_sg.id]
   # }
+
 
   ingress {
     from_port       = 8080 # Your app port
