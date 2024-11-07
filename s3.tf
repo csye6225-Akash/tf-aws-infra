@@ -35,13 +35,10 @@ resource "random_id" "bucket_id" {
 # Create the S3 Bucket with a unique name
 resource "aws_s3_bucket" "private_bucket" {
   bucket = "akash-bucket-${formatdate("YYYYMMDD", timestamp())}-${random_id.bucket_id.hex}"
-
+  acl = "private"
   force_destroy = true
 }
-resource "aws_s3_bucket_acl" "private_bucket_acl" {
-  bucket = aws_s3_bucket.private_bucket.id
-  acl    = "private"
-}
+
 
 # If you need to set a bucket policy, you can do it like this
 resource "aws_s3_bucket_policy" "private_bucket_policy" {
