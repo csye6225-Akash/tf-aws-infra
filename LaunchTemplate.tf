@@ -28,6 +28,13 @@ resource "aws_launch_template" "csye6225_lt" {
               echo "DEVPASSWORD=${var.db_password}" >> /opt/webapp/.env
               echo "DEVDB=${var.db_name}" >> /opt/webapp/.env
               echo "S3_BUCKET_NAME=${aws_s3_bucket.private_bucket.bucket}" >> /opt/webapp/.env
+              echo "MAILGUN_API_KEY=${var.mailgun_api_key}" >> /opt/webapp/.env
+               echo "MAILGUN_API_KEY=${var.BASE_URL}" >> /opt/webapp/.env
+              echo "MAILGUN_DOMAIN=${var.mailgun_domain}" >> /opt/webapp/.env
+              echo "S3_BUCKET_NAME=${aws_s3_bucket.private_bucket.bucket}" >> /opt/webapp/.env
+              echo "AWS_REGION=${var.aws_region}" >> /opt/webapp/.env
+              echo "SNS_TOPIC_ARN=${aws_sns_topic.email_verification_topic.arn}" >> /opt/webapp/.env
+              echo "SENDER_EMAIL=${var.sender_email}" >> /opt/webapp/.env
 
               sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
               -a fetch-config \
