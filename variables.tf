@@ -74,11 +74,11 @@ variable "scale_down_threshold" {
 
 variable "mailgun_api_key" {
   type = string
-} 
+}
 
 variable "lambda_package_path" {
   type = string
-} 
+}
 
 variable "mailgun_domain" {
   type = string
