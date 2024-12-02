@@ -91,3 +91,6 @@ variable "BASE_URL" {
 variable "sender_email" {
   type = string
 }
+variable "certificate_arn" {
+  type = string
+}

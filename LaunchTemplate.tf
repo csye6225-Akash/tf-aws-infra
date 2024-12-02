@@ -4,6 +4,7 @@ resource "aws_launch_template" "csye6225_lt" {
   instance_type = "t2.micro"
   //key_name      = "YOUR_AWS_KEYNAME"
 
+
   iam_instance_profile {
     name = aws_iam_instance_profile.instance_profile.name
   }
@@ -13,6 +14,17 @@ resource "aws_launch_template" "csye6225_lt" {
     security_groups             = [aws_security_group.web_sg.id]
   }
 
+  #  block_device_mappings {
+  #   device_name = "/dev/xvda"
+  #   ebs {
+  #     volume_size           = 20
+  #     volume_type           = "gp3"
+  #     kms_key_id            = aws_kms_key.ec2_key.arn # Specify the KMS key for encryption
+  #     delete_on_termination = true
+  #     encrypted             = true
+  #   }
+  # }
+
   user_data = base64encode(<<-EOF
               #!/bin/bash
              
@@ -21,11 +33,18 @@ resource "aws_launch_template" "csye6225_lt" {
               
               # Remove the ":3306" from the RDS endpoint
               DB_HOST_CLEAN=$(echo ${aws_db_instance.db_instance.endpoint} | sed 's/:3306//')
-              
+              REGION=${var.aws_region}
+              SECRET_NAME="db_password16"
+              DB_CREDENTIALS=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --region $REGION | jq -r .SecretString)
+              DEV_USERNAME=$(echo $DB_CREDENTIALS | jq -r .username)
+              DEV_PASSWORD=$(echo $DB_CREDENTIALS | jq -r .password)
+              # The secret value is directly stored as a plaintext string, so assign it to the password variable
+                  
               # Create the .env file with the environment variables
-              echo "DEVHOST=$DB_HOST_CLEAN" > /opt/webapp/.env
+              echo "DEVHOST=$DB_HOST_CLEAN" >> /opt/webapp/.env
+              echo "TEST=$DEV_PASSWORD" >> /opt/webapp/.env
               echo "DEVUSERNAME=${var.db_username}" >> /opt/webapp/.env
-              echo "DEVPASSWORD=${var.db_password}" >> /opt/webapp/.env
+              echo "DEVPASSWORD=$DEV_PASSWORD" >> /opt/webapp/.env
               echo "DEVDB=${var.db_name}" >> /opt/webapp/.env
               echo "S3_BUCKET_NAME=${aws_s3_bucket.private_bucket.bucket}" >> /opt/webapp/.env
               echo "MAILGUN_API_KEY=${var.mailgun_api_key}" >> /opt/webapp/.env
@@ -126,12 +145,27 @@ resource "aws_lb_target_group" "csye6225_tg" {
 
 resource "aws_lb_listener" "csye6225_http_listener" {
   load_balancer_arn = aws_lb.csye6225_alb.arn
-  port              = 80
-  protocol          = "HTTP"
+  port              = 443
+  protocol          = "HTTPS"
+
+  
+  
+   certificate_arn = "arn:aws:acm:us-west-2:886436923776:certificate/ca3f775b-b1f1-45ef-b95e-ca4f237b9f63"  # Replace with your ACM cert ARN
+  
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.csye6225_tg.arn
+  }
+  
+}
+
+resource "aws_acm_certificate" "example_cert" {
+  domain_name = "dev.akashchhabria.me"  # Replace with your domain name
+  validation_method = "DNS"
+
+  tags = {
+    Name = "ExampleCertificate"
   }
 }
 
