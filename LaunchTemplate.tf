@@ -34,7 +34,7 @@ resource "aws_launch_template" "csye6225_lt" {
               # Remove the ":3306" from the RDS endpoint
               DB_HOST_CLEAN=$(echo ${aws_db_instance.db_instance.endpoint} | sed 's/:3306//')
               REGION=${var.aws_region}
-              SECRET_NAME="db_password16"
+              SECRET_NAME="db_password19"
               DB_CREDENTIALS=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --region $REGION | jq -r .SecretString)
               DEV_USERNAME=$(echo $DB_CREDENTIALS | jq -r .username)
               DEV_PASSWORD=$(echo $DB_CREDENTIALS | jq -r .password)
@@ -150,7 +150,7 @@ resource "aws_lb_listener" "csye6225_http_listener" {
 
   
   
-   certificate_arn = "arn:aws:acm:us-west-2:886436923776:certificate/ca3f775b-b1f1-45ef-b95e-ca4f237b9f63"  # Replace with your ACM cert ARN
+   certificate_arn = var.certificate_arn  # Replace with your ACM cert ARN
   
 
   default_action {
