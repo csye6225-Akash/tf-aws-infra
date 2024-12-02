@@ -119,9 +119,11 @@ resource "aws_db_instance" "db_instance" {
   engine                 = "mysql"
   instance_class         = "db.t3.micro"
   engine_version         = "8.0.33"
+  kms_key_id             = aws_kms_key.rds_key.arn
   db_name                = var.db_name
   username               = var.db_username
-  password               = var.db_password # Store in environment variable or use Terraform secrets
+  password               = random_password.db_password.result # Store in environment variable or use Terraform secrets
+  storage_encrypted      = true
   db_subnet_group_name   = aws_db_subnet_group.rds_subnet_group.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]
   multi_az               = false
