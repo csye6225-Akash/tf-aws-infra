@@ -154,3 +154,80 @@ resource "aws_iam_role_policy_attachment" "ec2_sns_publish_policy_attachment" {
   policy_arn = aws_iam_policy.ec2_sns_publish_policy.arn
 }
  
+
+ resource "aws_iam_policy" "lambda_secrets_policy" {
+  name = "LambdaSecretsAccess"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "kms:Decrypt"
+        ],
+        Resource = aws_kms_key.secrets_manager_key.arn
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ],
+        Resource = aws_secretsmanager_secret.mailgun_api_key.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_lambda_secrets_policy" {
+  role       = aws_iam_role.instance_role.name
+  policy_arn = aws_iam_policy.lambda_secrets_policy.arn
+}
+
+
+resource "aws_iam_policy" "lambda_secrets_manager_access" {
+  name        = "LambdaSecretsManagerAccess"
+  description = "Policy to allow Lambda function to access Secrets Manager for email verification"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "secretsmanager:GetSecretValue"
+        Resource = "arn:aws:secretsmanager:us-west-2:361769559850:secret:mailgun-api-key2-*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_secrets_manager_policy_attachment" {
+  role       = "network-setup-lambda-execution-role"
+  policy_arn = aws_iam_policy.lambda_secrets_manager_access.arn
+}
+
+
+resource "aws_iam_policy" "lambda_kms_access" {
+  name        = "LambdaKMSAccess"
+  description = "Policy to allow Lambda function to use KMS for decryption"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "kms:Decrypt"
+        Resource = "arn:aws:kms:us-west-2:361769559850:key/mailgun-api-key2-*"  # Replace with your KMS key ARN
+      },
+      {
+        Effect   = "Allow"
+        Action   = "kms:Decrypt"
+        Resource = "arn:aws:kms:us-west-2:361769559850:key/alias/aws/secretsmanager"  # For default KMS key
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_kms_policy_attachment" {
+  role       = "network-setup-lambda-execution-role"
+  policy_arn = aws_iam_policy.lambda_kms_access.arn
+}

@@ -44,3 +44,8 @@ output "s3_bucket_name" {
   value       = aws_s3_bucket.private_bucket.bucket
   description = "The name of the private S3 bucket."
 }
+
+output "ec2key" {
+  value       =  aws_kms_key.ec2_key.arn
+  description = "The name of the private S3 bucket."
+}
