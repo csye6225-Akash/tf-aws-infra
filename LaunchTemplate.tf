@@ -18,7 +18,7 @@ resource "aws_launch_template" "csye6225_lt" {
     device_name = "/dev/xvda"
     ebs {
       volume_size           = 50
-      volume_type           = "gp3"
+      volume_type           = "gp2"
       kms_key_id            = aws_kms_key.ec2_key.arn # Specify the KMS key for encryption
       delete_on_termination = true
       encrypted = true
@@ -34,7 +34,7 @@ resource "aws_launch_template" "csye6225_lt" {
               # Remove the ":3306" from the RDS endpoint
               DB_HOST_CLEAN=$(echo ${aws_db_instance.db_instance.endpoint} | sed 's/:3306//')
               REGION=${var.aws_region}
-              SECRET_NAME="db_password24"
+              SECRET_NAME="db_password26"
               DB_CREDENTIALS=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --region $REGION | jq -r .SecretString)
               DEV_USERNAME=$(echo $DB_CREDENTIALS | jq -r .username)
               DEV_PASSWORD=$(random_password.db_password.result)
