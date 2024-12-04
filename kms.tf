@@ -312,7 +312,7 @@ resource "random_password" "db_password" {
 
 # Secrets Manager Secret
 resource "aws_secretsmanager_secret" "db_password" {
-  name       = "db_password26"
+  name       = "db_password27"
   kms_key_id = aws_kms_key.secrets_manager_key.id
 }
 

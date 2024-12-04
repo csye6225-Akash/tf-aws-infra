@@ -271,7 +271,7 @@ resource "aws_kms_key" "secrets_manager_key1" {
 
 # Define Secrets Manager Secret
 resource "aws_secretsmanager_secret" "mailgun_api_key" {
-  name       = "mailgun-api-key9"
+  name       = "mailgun-api-key10"
   kms_key_id = aws_kms_key.secrets_manager_key1.arn
 }
 
