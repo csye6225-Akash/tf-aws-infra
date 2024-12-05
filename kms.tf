@@ -4,75 +4,95 @@ resource "aws_kms_key" "ec2_key" {
   enable_key_rotation     = true
   rotation_period_in_days = 90  
 
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Id      = "key-policy"
-    Statement = [
-      {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+  tags = {
+    Name = "EBS KMS Key"
+  }
+
+  policy = <<EOF
+{
+    "Id": "key-for-ebs",
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow access for Key Administrators",
+            "Effect": "Allow",
+            "Principal": {
+               "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+            },
+            "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow use of the key",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+            },
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow attachment of persistent resources",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+            },
+            "Action": [
+                "kms:CreateGrant",
+                "kms:ListGrants",
+                "kms:RevokeGrant"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            }
         }
-        Action   = "kms:*"
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow use of the key"
-        Effect = "Allow"
-        Principal = {
-          AWS = [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.instance_role.name}"
-          ]
-        }
-        Action = [
-          "kms:DescribeKey",
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey",
-          "kms:GenerateDataKeyWithoutPlaintext"
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "Allow attachment of persistent resources"
-        Effect = "Allow"
-        Principal = {
-          AWS = [
-            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${aws_iam_role.instance_role.name}"
-          ]
-        }
-        Action = [
-          "kms:CreateGrant",
-          "kms:ListGrants",
-          "kms:RevokeGrant"
-        ]
-        Resource = "*"
-        Condition = {
-          Bool = {
-            "kms:GrantIsForAWSResource" = "true"
-          }
-        }
-      }
     ]
-  })
+}
+EOF
 }
 
 # Add an alias for easier management
-resource "aws_kms_alias" "ec2_key_alias" {
-  name          = "alias/ec2-encryption-key"
-  target_key_id = aws_kms_key.ec2_key.key_id
-}
+
 
 # Ensure you have this data source to get the current account ID
 data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key" "rds_key" {
-  description             = "KMS key for RDS"
-  enable_key_rotation     = true
-  rotation_period_in_days = 90  
+  description         = "KMS key for RDS"
+  enable_key_rotation = true
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -85,17 +105,63 @@ resource "aws_kms_key" "rds_key" {
         }
         Action   = "kms:*"
         Resource = "*"
-      },
+      }
+    ]
+  })
+}
+
+
+resource "aws_kms_key_policy" "rds_kms_key_policy" {
+  key_id = aws_kms_key.rds_key.key_id
+
+  policy = jsonencode({
+    Id       = "key-for-rds"
+    Version  = "2012-10-17"
+    Statement = [
       {
-        Sid    = "Allow EC2 Instance Role Access"
+        Sid    = "Enable IAM User Permissions"
         Effect = "Allow"
         Principal = {
-          AWS = aws_iam_role.instance_role.arn
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow access for Key Administrators"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+        }
+        Action = [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow access for RDS"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
         }
         Action = [
           "kms:Encrypt",
           "kms:Decrypt",
-          "kms:GenerateDataKey",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
           "kms:DescribeKey"
         ]
         Resource = "*"
@@ -150,21 +216,64 @@ resource "aws_kms_key" "secrets_manager_key" {
   enable_key_rotation     = true
   rotation_period_in_days = 90  
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+   policy = jsonencode({
+    "Id" : "key-for-ebs",
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-        }
-        Action   = "kms:*"
-        Resource = "*"
+        "Sid" : "Enable IAM User Permissions",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        },
+        "Action" : "kms:*",
+        "Resource" : "*"
+      },
+      {
+        "Sid" : "Allow access for Key Administrators",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+        },
+        "Action" : [
+          "kms:Create*",
+          "kms:Describe*",
+          "kms:Enable*",
+          "kms:List*",
+          "kms:Put*",
+          "kms:Update*",
+          "kms:Revoke*",
+          "kms:Disable*",
+          "kms:Get*",
+          "kms:Delete*",
+          "kms:TagResource",
+          "kms:UntagResource",
+          "kms:ScheduleKeyDeletion",
+          "kms:CancelKeyDeletion"
+        ],
+        "Resource" : "*"
+      },
+      {
+        "Sid" : "Allow use of the key",
+        "Effect" : "Allow",
+        "Principal" : {
+          "AWS" : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"
+        },
+        "Action" : [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        "Resource" : "*"
       }
     ]
   })
 }
+
+
+
 
 
 
@@ -194,10 +303,8 @@ resource "aws_kms_key" "secrets_manager_key" {
 resource "random_password" "db_password" {
   length  = 16
   special = true
-override_special = "!#$%^&*-_"
-  upper    = true
-  lower    = true
-  number   = true
+  override_special = "_%$!"
+ 
 }
 
 # Create a custom KMS key for Secrets Manager
@@ -205,7 +312,7 @@ override_special = "!#$%^&*-_"
 
 # Secrets Manager Secret
 resource "aws_secretsmanager_secret" "db_password" {
-  name       = "db_password19"
+  name       = "db_password27"
   kms_key_id = aws_kms_key.secrets_manager_key.id
 }
 
@@ -286,14 +393,3 @@ resource "aws_iam_role_policy_attachment" "attach_kms_policy" {
   policy_arn = aws_iam_policy.kms_policy.arn
 }
 
-resource "aws_secretsmanager_secret" "mailgun_api_key" {
-  name       = "mailgun-api-key2"
-  kms_key_id = aws_kms_key.secrets_manager_key.arn
-}
-
-resource "aws_secretsmanager_secret_version" "mailgun_api_key_version" {
-  secret_id     = aws_secretsmanager_secret.mailgun_api_key.id
-  secret_string = jsonencode({
-    MAILGUN_API_KEY = "ed3026cd34ad11e2eeda7f1564b45db5-6df690bb-d08bd58a"
-  })
-}

@@ -94,3 +94,4 @@ variable "sender_email" {
 variable "certificate_arn" {
   type = string
 }
+

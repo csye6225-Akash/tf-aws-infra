@@ -1,6 +1,6 @@
 resource "aws_launch_template" "csye6225_lt" {
   name          = "csye6225_lt"
-  image_id      = data.aws_ami.latest_ami.id
+  //image_id      = data.aws_ami.latest_ami.id
   instance_type = "t2.micro"
   //key_name      = "YOUR_AWS_KEYNAME"
 
@@ -14,16 +14,16 @@ resource "aws_launch_template" "csye6225_lt" {
     security_groups             = [aws_security_group.web_sg.id]
   }
 
-  #  block_device_mappings {
-  #   device_name = "/dev/xvda"
-  #   ebs {
-  #     volume_size           = 20
-  #     volume_type           = "gp3"
-  #     kms_key_id            = aws_kms_key.ec2_key.arn # Specify the KMS key for encryption
-  #     delete_on_termination = true
-  #     encrypted             = true
-  #   }
-  # }
+   block_device_mappings {
+    device_name = "/dev/xvda"
+    ebs {
+      volume_size           = 50
+      volume_type           = "gp2"
+      kms_key_id            = aws_kms_key.ec2_key.arn # Specify the KMS key for encryption
+      delete_on_termination = true
+      encrypted = true
+    }
+  }
 
   user_data = base64encode(<<-EOF
               #!/bin/bash
@@ -34,17 +34,17 @@ resource "aws_launch_template" "csye6225_lt" {
               # Remove the ":3306" from the RDS endpoint
               DB_HOST_CLEAN=$(echo ${aws_db_instance.db_instance.endpoint} | sed 's/:3306//')
               REGION=${var.aws_region}
-              SECRET_NAME="db_password19"
+              SECRET_NAME="db_password27"
               DB_CREDENTIALS=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --region $REGION | jq -r .SecretString)
               DEV_USERNAME=$(echo $DB_CREDENTIALS | jq -r .username)
-              DEV_PASSWORD=$(echo $DB_CREDENTIALS | jq -r .password)
+              DEV_PASSWORD=$(random_password.db_password.result)
               # The secret value is directly stored as a plaintext string, so assign it to the password variable
                   
               # Create the .env file with the environment variables
               echo "DEVHOST=$DB_HOST_CLEAN" >> /opt/webapp/.env
               echo "TEST=$DEV_PASSWORD" >> /opt/webapp/.env
               echo "DEVUSERNAME=${var.db_username}" >> /opt/webapp/.env
-              echo "DEVPASSWORD=$DEV_PASSWORD" >> /opt/webapp/.env
+              echo "DEVPASSWORD=${random_password.db_password.result}" >> /opt/webapp/.env
               echo "DEVDB=${var.db_name}" >> /opt/webapp/.env
               echo "S3_BUCKET_NAME=${aws_s3_bucket.private_bucket.bucket}" >> /opt/webapp/.env
               echo "MAILGUN_API_KEY=${var.mailgun_api_key}" >> /opt/webapp/.env
