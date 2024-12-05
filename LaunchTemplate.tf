@@ -1,6 +1,6 @@
 resource "aws_launch_template" "csye6225_lt" {
   name          = "csye6225_lt"
-  image_id      = data.aws_ami.latest_ami.id
+  //image_id      = data.aws_ami.latest_ami.id
   instance_type = "t2.micro"
   //key_name      = "YOUR_AWS_KEYNAME"
 
